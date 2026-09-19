@@ -24,6 +24,7 @@ dsh-feishu/
 │       └── scheduler.js        #   工作日时间槽调度(纯函数可测)
 ├── test/                       # 离线单元测试(npm test 共 85 个用例)
 ├── .env                        # 配置(已 gitignore;参考 .env.example)
+├── LICENSE                     # MIT
 └── package.json
 ```
 
@@ -298,3 +299,9 @@ npm test        # 离线跑全部单元测试(85 个用例,不联网)
 
 > ⚠️ 首次使用请先 `npm install`(需联网下载官方 SDK @larksuiteoapi/node-sdk)。
 > 行情数据来自腾讯/东方财富免费接口,仅供个人参考。
+
+## 许可证
+
+[MIT](./LICENSE) © 2026 imbrain1989
+
+> 第三方依赖 `@larksuiteoapi/node-sdk` 遵循其自身许可(MIT);行情数据接口为公开免费接口,请自行确认使用条款。

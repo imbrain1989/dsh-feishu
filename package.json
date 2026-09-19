@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "description": "飞书插件化项目:core 插件运行时 + feishu 连接插件 + stock-broadcast 股价播报插件",
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=18"
