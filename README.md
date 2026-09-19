@@ -1,28 +1,28 @@
 # dsh-feishu — 飞书插件化项目
 
-把「飞书连接」和「九安医疗股价播报」整理成**两个独立插件**,跑在一个轻量插件运行时上。新增功能只需新增一个插件目录。
+把**飞书通讯能力**做成独立插件,跑在一个轻量插件运行时上。新增功能只需新增一个插件目录。
+
+> 本机自用的其它插件(不随仓库发布)放在 `app/local-plugins.js` 里按需加载,见「[本机自用插件](#本机自用插件不发布)」。
 
 ```
 dsh-feishu/
 ├── core/                       # 插件运行时(零依赖)
 │   └── runtime.js              #   注册/服务注入/依赖拓扑排序/生命周期
 ├── app/
-│   ├── main.js                 # 应用入口:npm run listen(启动全部插件)
-│   └── cli.js                  # 命令入口:按插件 commands 分发
+│   ├── main.js                 # 应用入口:npm run listen(启动插件)
+│   ├── cli.js                  # 命令入口:按插件 commands 分发
+│   └── local-plugins.js        # (可选/本机私有,gitignore)私有插件清单
 ├── plugins/
-│   ├── feishu/                 # ★ 插件① 飞书连接
-│   │   ├── manifest.json       #   元信息(name/version/deps)
-│   │   ├── index.js            #   插件定义:注册 feishu 服务 + 命令 send
-│   │   ├── webhook.js          #   Webhook 发送(加签/文本/富文本/卡片)
-│   │   ├── app-api.js          #   企业自建应用 API(tenant_access_token + im/v1)
-│   │   ├── receive.js          #   长连接接收机器人(echo | dsh;超时才回执)
-│   │   └── dsh.js              #   DSH 连接:调用本机 dsh headless 智能体处理消息
-│   └── stock-broadcast/        # ★ 插件② 股价播报(依赖 feishu)
-│       ├── manifest.json       #   deps: ["feishu"]
-│       ├── index.js            #   插件定义:启动调度器 + 命令 stock:now
-│       ├── quote.js            #   行情获取(腾讯/东财免费源)与格式化
-│       └── scheduler.js        #   工作日时间槽调度(纯函数可测)
-├── test/                       # 离线单元测试(npm test 共 85 个用例)
+│   └── feishu/                 # ★ 飞书连接插件
+│       ├── manifest.json       #   元信息(name/version/deps)
+│       ├── index.js            #   插件定义:注册 feishu 服务 + 命令 send
+│       ├── webhook.js          #   Webhook 发送(加签/文本/富文本/卡片)
+│       ├── app-api.js          #   企业自建应用 API(tenant_access_token + im/v1)
+│       ├── receive.js          #   长连接接收机器人(echo | dsh;超时才回执)
+│       ├── card-approval.js    #   交互卡片式审批(同意/拒绝)
+│       ├── approval-bridge.js  #   审批桥(本地 HTTP,headless 智能体 ↔ 飞书)
+│       └── dsh.js              #   DSH 连接:调用本机 dsh headless 智能体处理消息
+├── test/                       # 离线单元测试(npm test 共 77 个用例)
 ├── .env                        # 配置(已 gitignore;参考 .env.example)
 ├── LICENSE                     # MIT
 └── package.json
@@ -44,7 +44,7 @@ export default {
 ```
 
 - **ctx(runtime)** 提供 `env` / `logger` / `plugins` / `services`
-- **插件间协作**:通过服务注入。如 stock-broadcast 声明 `deps: ['feishu']`,在 start 里 `ctx.getService('feishu').sendText(...)` 发消息
+- **插件间协作**:通过服务注入。如某插件声明 `deps: ['feishu']`,就能在 start 里 `ctx.getService('feishu').sendText(...)` 发消息
 - **启动顺序**:install(全部)→ start(按依赖拓扑,被依赖者先);停止时逆序
 - 依赖缺失/循环/重复注册都会在启动时报出明确错误
 
@@ -54,12 +54,27 @@ export default {
 2. 在 `app/main.js` 与 `app/cli.js` 里 `runtime.use(myPlugin)`(两处都注册,命令才会出现在 CLI)
 3. `npm run listen` 验证
 
+> 只想自己用、不想公开的插件,别改 `app/main.js`,直接挂到 `app/local-plugins.js` 即可(见下一节)。
+
+### 本机自用插件(不发布)
+
+`app/main.js` 与 `app/cli.js` 启动时会尝试加载 **`app/local-plugins.js`**:
+
+```js
+// app/local-plugins.js —— 该文件在 .gitignore 里,不会上传
+import myPrivatePlugin from '../plugins/my-private/index.js';
+export default [myPrivatePlugin];
+```
+
+- 文件**不存在就跳过**(公开仓库里没有它,克隆下来照样能跑)
+- 文件存在则把默认导出的插件数组一并注册,命令也会出现在 `node app/cli.js help` 里
+- 适合"自己机器上跑、但不想公开"的功能(例如定时行情播报这类带个人配置的插件)
+
 ## 模式说明
 
 | 插件 | 能力 | 关键命令 |
 |---|---|---|
 | **feishu** | 发送(Webhook/自建应用,含图片传输)+ 长连接接收(echo / DSH 回复模式,含图片消息) | `npm run send` |
-| **stock-broadcast** | 工作日 09:35/10:30/11:30/13:00/14:00/15:00 推送 A 股实时行情到群 | `npm run stock:now` |
 
 ### 图片传输(新增)
 
@@ -109,26 +124,20 @@ FEISHU_BOT_MODE=dsh
 FEISHU_DSH_CMD=C:\path\to\dsh\lib\bin.js
 FEISHU_DSH_TIMEOUT_MS=180000           # 单条消息最长等待
 FEISHU_STATUS_THRESHOLD_MS=150000      # 150s 内跑完就不回"收到"(见下文「回执策略」)
-
-# 股价播报
-FEISHU_STOCK_ENABLED=true
-FEISHU_STOCK_CODE=002432            # 九安医疗;可改任意 A 股
-FEISHU_STOCK_TIMES=09:35,10:30,11:30,13:00,14:00,15:00
-FEISHU_STOCK_CHAT_ID=               # 缺省用 FEISHU_CHAT_ID
 ```
 
 ### 2. 安装依赖并启动
 
 ```bash
 npm install
-npm run listen      # 启动全部插件:飞书长连接接收 + 股价定时播报
+npm run listen      # 启动插件:飞书长连接接收(+ 本机自用插件,若已配置)
 ```
 
 ### 3. 测试
 
 ```bash
 npm run send -- --app --text "你好,飞书 🎉"     # 发消息(命令 send)
-npm run stock:now -- --send                    # 立即推送一次行情
+node app/cli.js help                          # 列出当前可用的全部命令
 ```
 
 飞书端:单聊直接发消息给机器人;群聊 @机器人。收到 `ws client ready` 即连接成功。
@@ -267,8 +276,6 @@ npm run send -- --app --text "消息"                # 应用模式(推荐)
 npm run send -- --app --chat oc_xxx --text "指定群"
 npm run send -- --card                            # 演示卡片
 npm run send -- --app --image path/to/pic.png     # 发一张图片(自建应用/Webhook 模式)
-npm run stock:now                                 # 打印当前行情
-npm run stock:now -- 600519 --send                # 指定股票并推送到群
 node app/cli.js help                              # 列出全部插件命令
 ```
 
@@ -288,13 +295,13 @@ node app/cli.js help                              # 列出全部插件命令
 |---|---|
 | 飞书里 AI 对话(已实现,dsh 模式) | feishu 插件 + 本机 DSH 智能体(带工具),每条消息一个智能体会话 |
 | 读写云文档/表格/日历 | 新增插件,在 feishu 插件基础上调 `docx` / `sheets` API |
-| 更多股票/更多时间点 | 改 `.env` 的 `FEISHU_STOCK_CODE` / `FEISHU_STOCK_TIMES` 即可 |
+| 更多自动化(定时推送等) | 新增插件目录;公开的注册进 `app/main.js`,私有的挂到 `app/local-plugins.js`(见「本机自用插件」) |
 | 法定节假日精确判断 | 在 scheduler 里接入节假日 API(当前仅周一~周五) |
 
 ## 开发
 
 ```bash
-npm test        # 离线跑全部单元测试(85 个用例,不联网)
+npm test        # 离线跑全部单元测试(77 个用例,不联网)
 ```
 
 > ⚠️ 首次使用请先 `npm install`(需联网下载官方 SDK @larksuiteoapi/node-sdk)。

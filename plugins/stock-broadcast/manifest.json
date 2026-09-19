@@ -1,6 +1,0 @@
-{
-  "name": "stock-broadcast",
-  "version": "1.0.0",
-  "description": "九安医疗等A股股价播报插件:工作日定时拉取实时行情并推送到飞书群(依赖 feishu 插件发送)",
-  "deps": ["feishu"]
-}

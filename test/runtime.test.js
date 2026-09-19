@@ -33,10 +33,10 @@ test('依赖拓扑排序:被依赖者先启动、后停止', async () => {
   const order = [];
   const rt = createRuntime({ logger: quietLogger });
   rt.use(
-    makePlugin('stock', {
+    makePlugin('notify', {
       deps: ['feishu'],
-      start: async () => order.push('start:stock'),
-      stop: async () => order.push('stop:stock'),
+      start: async () => order.push('start:notify'),
+      stop: async () => order.push('stop:notify'),
     })
   );
   rt.use(
@@ -47,7 +47,7 @@ test('依赖拓扑排序:被依赖者先启动、后停止', async () => {
   );
   await rt.start();
   await rt.stop();
-  assert.deepEqual(order, ['start:feishu', 'start:stock', 'stop:stock', 'stop:feishu']);
+  assert.deepEqual(order, ['start:feishu', 'start:notify', 'stop:notify', 'stop:feishu']);
 });
 
 test('服务注入:依赖插件通过 getService 使用服务', async () => {
@@ -61,7 +61,7 @@ test('服务注入:依赖插件通过 getService 使用服务', async () => {
     })
   );
   rt.use(
-    makePlugin('stock', {
+    makePlugin('notify', {
       deps: ['feishu'],
       start(ctx) {
         received = ctx.getService('feishu');

@@ -3,15 +3,29 @@
 // 用法:
 //   npm run send -- --text "你好"        → node app/cli.js send --text 你好
 //   npm run send -- --app --text "x"      → node app/cli.js send --app --text x
-//   npm run stock:now -- --send           → node app/cli.js stock:now --send
 //   node app/cli.js help                  → 列出所有插件命令
+//
+// 本机自用插件(可选):存在 app/local-plugins.js 时一并注册,其命令也会出现在 help 里。
 
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { createRuntime } from '../core/index.js';
 import feishuPlugin from '../plugins/feishu/index.js';
-import stockPlugin from '../plugins/stock-broadcast/index.js';
+
+const LOCAL_PLUGINS_FILE = fileURLToPath(new URL('./local-plugins.js', import.meta.url));
 
 const runtime = createRuntime();
-runtime.use(feishuPlugin).use(stockPlugin);
+runtime.use(feishuPlugin);
+
+// 本机自用插件(不上传仓库;文件不存在则跳过)
+if (existsSync(LOCAL_PLUGINS_FILE)) {
+  const mod = await import('./local-plugins.js');
+  if (!Array.isArray(mod.default)) {
+    console.error('❌ app/local-plugins.js 必须默认导出插件数组,例如: export default [myPlugin]');
+    process.exit(1);
+  }
+  for (const plugin of mod.default) runtime.use(plugin);
+}
 
 const [cmd, ...args] = process.argv.slice(2);
 

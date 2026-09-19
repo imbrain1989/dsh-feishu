@@ -22,11 +22,18 @@ dsh-market.zip
 __stage
 stage.*.zstd*
 
+# ---------- 本机自用插件(不发布到 GitHub) ----------
+# 仓库只发布飞书通讯能力;这些私有插件留在本机,靠 app/local-plugins.js 按需加载
+plugins/stock-broadcast/
+test/stock.test.js
+app/local-plugins.js
+
 # ---------- 本机会话数据与私人文件(不属于插件源码) ----------
 .session-backups-*/
 amap-source.txt
-整理清单.md
-九安医疗*.md
+# 根目录下的个人笔记/分析文档(只发布 README)
+/*.md
+!/README.md
 test-web-resume.mjs
 analyze-gap.mjs
 repair-live-session.mjs
