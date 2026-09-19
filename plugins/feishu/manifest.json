@@ -1,0 +1,6 @@
+{
+  "name": "feishu",
+  "version": "1.0.0",
+  "description": "飞书连接插件:Webhook/企业自建应用发送消息 + 长连接接收机器人(echo / DSH 两种回复模式)",
+  "deps": []
+}

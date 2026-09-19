@@ -1,0 +1,40 @@
+# headless profile 默认 DeepSeek API 配置(锁死 —— 建议保持应用)
+# 作用:让 Feishu 机器人的 DSH 智能体始终使用 DeepSeek 官方 API(deepseek-v4-flash),
+#      覆盖本地 settings.yaml 的 q38 本地模型覆盖层,即使 LM Studio 离线也不被抢路由。
+# 应用方式:把本文件内容复制到 $DSH_HOME/profiles/headless/cordis.patch.yml
+#          (替换里面的 []);想切回纯 DeepSeek API 默认时,可再还原为 []。
+# 说明:内置 dsh CLI 默认就是 deepseek-official/deepseek-v4-flash;本补丁只是把"本地 q38"
+#      降级为非默认可选项,确保默认永远走 DeepSeek API。
+- id: settings
+  name: '@deepseek-ai/dsh-settings-file'
+  disabled: true
+
+- id: llm-pi-ai
+  name: '@deepseek-ai/dsh-llm-pi-ai'
+  config:
+    providers:
+      q38:            # 保留本地模型作为可选(非默认)
+        displayName: 本地 LM Studio (MTP)
+        apiKeyEnv: Q38_API_KEY
+        api: openai-completions
+        baseURL: http://127.0.0.1:1234/v1
+        models:
+          - id: qwen3.6-35b-a3b-mtp
+            name: Qwen3.6-35B-A3B-MTP
+            contextWindow: 16384
+            maxTokens: 8192
+            input: [text]
+      deepseek:       # 默认模型 = DeepSeek API
+        displayName: DeepSeek 官方
+        apiKeyEnv: DEEPSEEK_API_KEY
+        api: openai-completions
+        baseURL: https://api.deepseek.com/v1
+        models:
+          - id: deepseek-v4-flash
+          - id: deepseek-v4-pro
+
+- id: agent-default-model
+  name: '@deepseek-ai/dsh-agent-default-model'
+  config:
+    provider: deepseek
+    model: deepseek-v4-flash

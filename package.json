@@ -1,0 +1,21 @@
+{
+  "name": "dsh-feishu",
+  "version": "0.2.0",
+  "private": true,
+  "description": "飞书插件化项目:core 插件运行时 + feishu 连接插件 + stock-broadcast 股价播报插件",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node test/feishu.test.js && node test/app-api.test.js && node test/bot.test.js && node test/stock.test.js && node test/dsh.test.js && node test/runtime.test.js && node test/approval.test.js && node test/card-approval.test.js && node test/image.test.js",
+    "send": "node --env-file-if-exists=.env app/cli.js send",
+    "send:card": "node --env-file-if-exists=.env app/cli.js send --card",
+    "send:app": "node --env-file-if-exists=.env app/cli.js send --app",
+    "listen": "node --env-file-if-exists=.env app/main.js",
+    "stock:now": "node --env-file-if-exists=.env app/cli.js stock:now"
+  },
+  "dependencies": {
+    "@larksuiteoapi/node-sdk": "^1.73.0"
+  }
+}

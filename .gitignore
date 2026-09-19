@@ -1,0 +1,35 @@
+# ---------- 依赖与本地工具链 ----------
+node_modules/
+npm-global/
+.npm-cache/
+.npm-cache-temp/
+temp/
+dsh-market-extract/
+dsh-market.zip
+
+# ---------- 机密与本地配置(绝不提交) ----------
+.env
+.env.local
+.env.*.local
+.gh-token
+.credentials*
+*credentials*.yaml
+
+# ---------- 运行时产物 ----------
+*.log
+.feishu-listener.pid
+.feishu-images/
+__stage
+stage.*.zstd*
+
+# ---------- 本机会话数据与私人文件(不属于插件源码) ----------
+.session-backups-*/
+amap-source.txt
+整理清单.md
+九安医疗*.md
+test-web-resume.mjs
+analyze-gap.mjs
+repair-live-session.mjs
+repair-session-log.mjs
+scan-session-logs.mjs
+dsh-scan-diag.mjs
